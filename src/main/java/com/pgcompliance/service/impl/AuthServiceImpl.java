@@ -6,6 +6,7 @@ import com.pgcompliance.dto.RegisterRequestDto;
 import com.pgcompliance.entity.User;
 import com.pgcompliance.exception.ResourceNotFoundException;
 import com.pgcompliance.repository.UserRepository;
+import com.pgcompliance.security.JwtTokenProvider;
 import com.pgcompliance.security.JwtUtil;
 import com.pgcompliance.service.AuthService;
 import lombok.RequiredArgsConstructor;
@@ -21,7 +22,7 @@ public class AuthServiceImpl
 
   private final PasswordEncoder passwordEncoder;
 
-  private final JwtUtil jwtUtil;
+  private final JwtTokenProvider jwtTokenProvider;
 
   @Override
   public String register(
@@ -65,8 +66,7 @@ public class AuthServiceImpl
           "Invalid credentials");
     }
 
-    String token = jwtUtil.generateToken(
-        user.getUsername());
+    String token = jwtTokenProvider.generateToken(user);
 
     return LoginResponseDto.builder()
         .token(token)
