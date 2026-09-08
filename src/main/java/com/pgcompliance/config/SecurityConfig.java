@@ -15,61 +15,45 @@ import org.springframework.security.web.authentication.UsernamePasswordAuthentic
 @EnableMethodSecurity
 public class SecurityConfig {
 
-    private final JwtAuthenticationFilter
-            jwtAuthenticationFilter;
+        private final JwtAuthenticationFilter jwtAuthenticationFilter;
 
-    @Bean
-    public SecurityFilterChain securityFilterChain(
-            HttpSecurity http
-    ) throws Exception {
+        @Bean
+        public SecurityFilterChain securityFilterChain(
+                        HttpSecurity http) throws Exception {
 
-        http
-                .cors(cors -> {
-                })
+                http
+                                .cors(cors -> {
+                                })
+                                .csrf(csrf -> csrf.disable())
+                                .sessionManagement(session -> session.sessionCreationPolicy(
+                                                SessionCreationPolicy.STATELESS))
+                                .authorizeHttpRequests(auth -> auth
+                                                .requestMatchers(
+                                                                "/api/v1/auth/login")
+                                                .permitAll()
 
-                .csrf(csrf ->
-                        csrf.disable()
-                )
+                                                .requestMatchers(
+                                                                "/api/v1/auth/register")
+                                                .permitAll()
 
-                .sessionManagement(session ->
-                        session.sessionCreationPolicy(
-                                SessionCreationPolicy.STATELESS
-                        )
-                )
+                                                .requestMatchers(
+                                                                "/api/v1/tenants/me",
+                                                                "/api/v1/notifications/**")
+                                                .hasAnyRole("ADMIN", "TENANT")
 
-                .authorizeHttpRequests(auth -> auth
+                                                .requestMatchers(
+                                                                "/api/v1/users/tenant-account",
+                                                                "/api/v1/buildings/**",
+                                                                "/api/v1/rooms/**",
+                                                                "/api/v1/tenants/**")
+                                                .hasRole("ADMIN")
 
-                        .requestMatchers(
-                                "/api/v1/auth/login"
-                        )
-                        .permitAll()
+                                                .anyRequest()
+                                                .authenticated())
+                                .addFilterBefore(
+                                                jwtAuthenticationFilter,
+                                                UsernamePasswordAuthenticationFilter.class);
 
-                        /*
-                         * Keep registration public temporarily.
-                         * Change to hasRole("ADMIN") after
-                         * confirming admin JWT authorization.
-                         */
-                        .requestMatchers(
-                                "/api/v1/auth/register"
-                        )
-                        .permitAll()
-
-                        .requestMatchers(
-                                "/api/v1/buildings/**",
-                                "/api/v1/rooms/**",
-                                "/api/v1/tenants/**"
-                        )
-                        .hasRole("ADMIN")
-
-                        .anyRequest()
-                        .authenticated()
-                )
-
-                .addFilterBefore(
-                        jwtAuthenticationFilter,
-                        UsernamePasswordAuthenticationFilter.class
-                );
-
-        return http.build();
-    }
+                return http.build();
+        }
 }

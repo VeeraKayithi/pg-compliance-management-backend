@@ -29,6 +29,24 @@ public class GlobalExceptionHandler {
                                 HttpStatus.NOT_FOUND);
         }
 
+        @ExceptionHandler(IllegalStateException.class)
+        public ResponseEntity<ErrorResponse> handleIllegalStateException(
+                        IllegalStateException ex) {
+
+                ErrorResponse response = ErrorResponse.builder()
+                                .timestamp(LocalDateTime.now())
+                                .status(
+                                                HttpStatus.BAD_REQUEST.value())
+                                .error(
+                                                "BUSINESS RULE VIOLATION")
+                                .message(ex.getMessage())
+                                .build();
+
+                return new ResponseEntity<>(
+                                response,
+                                HttpStatus.BAD_REQUEST);
+        }
+
         @ExceptionHandler(Exception.class)
         public ResponseEntity<ErrorResponse> handleException(Exception ex) {
 

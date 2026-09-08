@@ -26,4 +26,9 @@ public class User {
     private UserRole role;
 
     private Boolean active;
+
+    @OneToOne
+    @JoinColumn(name = "tenant_id")
+    private Tenant tenant;
+
 }

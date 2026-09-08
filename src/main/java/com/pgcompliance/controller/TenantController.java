@@ -1,11 +1,14 @@
 package com.pgcompliance.controller;
 
+import com.pgcompliance.dto.TenantProfileResponseDto;
 import com.pgcompliance.dto.TenantRequestDto;
 import com.pgcompliance.dto.TenantResponseDto;
 import com.pgcompliance.service.TenantService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -75,5 +78,15 @@ public class TenantController {
     tenantService.markTenantAsLeft(tenantId);
 
     return "Tenant marked as LEFT successfully";
+  }
+
+  @GetMapping("/me")
+  public ResponseEntity<TenantProfileResponseDto> getMyProfile(
+      Authentication authentication) {
+
+    TenantProfileResponseDto response = tenantService.getMyProfile(
+        authentication.getName());
+
+    return ResponseEntity.ok(response);
   }
 }
