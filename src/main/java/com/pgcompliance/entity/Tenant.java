@@ -8,7 +8,8 @@ import java.time.LocalDate;
 
 @Entity
 @Table(name = "tenants", uniqueConstraints = {
-    @UniqueConstraint(columnNames = "mobile_number")
+    @UniqueConstraint(name = "uk_tenant_mobile", columnNames = "mobile_number"),
+    @UniqueConstraint(name = "uk_tenant_email", columnNames = "email")
 })
 @Getter
 @Setter
@@ -27,8 +28,9 @@ public class Tenant {
   @Column(name = "mobile_number", nullable = false, unique = true)
   private String mobileNumber;
 
+  @Column(nullable = false, unique = true, length = 150)
   private String email;
-
+  
   private LocalDate joiningDate;
 
   @Enumerated(EnumType.STRING)

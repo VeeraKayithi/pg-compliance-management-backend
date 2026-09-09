@@ -7,7 +7,6 @@ import com.pgcompliance.entity.User;
 import com.pgcompliance.exception.ResourceNotFoundException;
 import com.pgcompliance.repository.UserRepository;
 import com.pgcompliance.security.JwtTokenProvider;
-import com.pgcompliance.security.JwtUtil;
 import com.pgcompliance.service.AuthService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.crypto.password.PasswordEncoder;

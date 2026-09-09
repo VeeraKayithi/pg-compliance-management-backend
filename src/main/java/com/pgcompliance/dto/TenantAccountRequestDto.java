@@ -14,9 +14,6 @@ public class TenantAccountRequestDto {
   private Long tenantId;
 
   @NotBlank(message = "Username is required")
+  @Size(min = 4, max = 100, message = "Username must contain between 4 and 100 characters")
   private String username;
-
-  @NotBlank(message = "Temporary password is required")
-  @Size(min = 8, message = "Temporary password must contain at least 8 characters")
-  private String temporaryPassword;
 }

@@ -2,21 +2,29 @@ package com.pgcompliance.repository;
 
 import com.pgcompliance.constant.TenantStatus;
 import com.pgcompliance.entity.Tenant;
+import org.springframework.data.jpa.repository.JpaRepository;
 
 import java.util.Optional;
 
-import org.springframework.data.jpa.repository.JpaRepository;
-
 public interface TenantRepository
-    extends JpaRepository<Tenant, Long> {
+        extends JpaRepository<Tenant, Long> {
 
-  boolean existsByMobileNumber(String mobileNumber);
+    boolean existsByMobileNumber(
+            String mobileNumber);
 
-  long countByRoomRoomId(Long roomId);
+    long countByRoomRoomId(
+            Long roomId);
 
-  long countByRoomRoomIdAndTenantStatus(Long roomId, TenantStatus tenantStatus);
+    long countByRoomRoomIdAndTenantStatus(
+            Long roomId,
+            TenantStatus tenantStatus);
 
-  Optional<Tenant> findByMobileNumber(
-      String mobileNumber);
+    Optional<Tenant> findByMobileNumber(
+            String mobileNumber);
 
+    boolean existsByEmailIgnoreCase(
+            String email);
+
+    Optional<Tenant> findByEmailIgnoreCase(
+            String email);
 }

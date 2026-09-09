@@ -17,18 +17,39 @@ public class User {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long userId;
 
-    @Column(unique = true)
+    @Column(unique = true, nullable = false)
     private String username;
 
+    @Column(nullable = false)
     private String password;
 
     @Enumerated(EnumType.STRING)
+    @Column(nullable = false)
     private UserRole role;
 
+    @Column(nullable = false)
     private Boolean active;
 
+    @Column(nullable = false)
+    private Boolean emailVerified;
+
+    @Column(nullable = false)
+    private Boolean passwordChangeRequired;
+
     @OneToOne
-    @JoinColumn(name = "tenant_id")
+    @JoinColumn(name = "tenant_id", unique = true)
     private Tenant tenant;
 
+    @PrePersist
+    void applyDefaults() {
+        if (active == null) {
+            active = false;
+        }
+        if (emailVerified == null) {
+            emailVerified = false;
+        }
+        if (passwordChangeRequired == null) {
+            passwordChangeRequired = true;
+        }
+    }
 }
