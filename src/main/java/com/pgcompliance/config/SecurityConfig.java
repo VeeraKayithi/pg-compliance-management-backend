@@ -2,12 +2,13 @@ package com.pgcompliance.config;
 
 import com.pgcompliance.security.JwtAuthenticationFilter;
 import lombok.RequiredArgsConstructor;
-import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.http.HttpMethod;
 import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.web.SecurityFilterChain;
+import org.springframework.context.annotation.Bean;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 
 @Configuration
@@ -15,118 +16,185 @@ import org.springframework.security.web.authentication.UsernamePasswordAuthentic
 @EnableMethodSecurity
 public class SecurityConfig {
 
-        private final JwtAuthenticationFilter jwtAuthenticationFilter;
+    private final JwtAuthenticationFilter
+            jwtAuthenticationFilter;
 
-        @Bean
-        public SecurityFilterChain securityFilterChain(
-                        HttpSecurity http) throws Exception {
+    @Bean
+    public SecurityFilterChain securityFilterChain(
+            HttpSecurity http
+    ) throws Exception {
 
-                http
-                                /*
-                                 * Uses your existing CorsConfigurationSource bean.
-                                 */
-                                .cors(cors -> {
-                                })
+        http
+                /*
+                 * Uses the CorsConfigurationSource bean
+                 * already defined in CorsConfig.java.
+                 */
+                .cors(cors -> {
+                })
 
-                                /*
-                                 * The backend is a stateless REST API using JWT.
-                                 */
-                                .csrf(csrf -> csrf.disable())
+                /*
+                 * CSRF is disabled because this application
+                 * uses stateless JWT Bearer authentication.
+                 */
+                .csrf(csrf ->
+                        csrf.disable()
+                )
 
-                                /*
-                                 * Spring Security will not create or use
-                                 * server-side HTTP sessions.
-                                 */
-                                .sessionManagement(session -> session.sessionCreationPolicy(
-                                                SessionCreationPolicy.STATELESS))
+                /*
+                 * Do not create or use server-side sessions.
+                 */
+                .sessionManagement(session ->
+                        session.sessionCreationPolicy(
+                                SessionCreationPolicy.STATELESS
+                        )
+                )
 
-                                .authorizeHttpRequests(auth -> auth
+                /*
+                 * Configure endpoint authorization.
+                 *
+                 * Specific endpoint rules must appear before
+                 * broader wildcard endpoint rules.
+                 */
+                .authorizeHttpRequests(auth -> auth
 
-                                                /*
-                                                 * Public authentication endpoints.
-                                                 *
-                                                 * Login must remain public because the user
-                                                 * does not have a JWT before signing in.
-                                                 *
-                                                 * Activation endpoints must remain public
-                                                 * because an inactive Tenant cannot log in yet.
-                                                 */
-                                                .requestMatchers(
-                                                                "/api/v1/auth/login",
-                                                                "/api/v1/auth/activation/validate",
-                                                                "/api/v1/auth/activation/complete",
-                                                                "/api/v1/auth/activation/resend")
-                                                .permitAll()
+                        /*
+                         * Allow CORS preflight requests.
+                         */
+                        .requestMatchers(
+                                HttpMethod.OPTIONS,
+                                "/**"
+                        )
+                        .permitAll()
 
-                                                /*
-                                                 * Keep registration public only during
-                                                 * development if you still need it.
-                                                 *
-                                                 * Before production, change this endpoint
-                                                 * to Admin-only access.
-                                                 */
-                                                .requestMatchers(
-                                                                "/api/v1/auth/register")
-                                                .permitAll()
+                        /*
+                         * Public login endpoint.
+                         */
+                        .requestMatchers(
+                                "/api/v1/auth/login"
+                        )
+                        .permitAll()
 
-                                                /*
-                                                 * Tenant self-profile.
-                                                 *
-                                                 * A Tenant can view only the profile linked
-                                                 * to the authenticated User account.
-                                                 */
-                                                .requestMatchers(
-                                                                "/api/v1/tenants/me")
-                                                .hasRole("TENANT")
+                        /*
+                         * Public Tenant account activation
+                         * endpoints.
+                         *
+                         * These must remain public because the
+                         * Tenant is inactive before activation.
+                         */
+                        .requestMatchers(
+                                "/api/v1/auth/activation/validate",
+                                "/api/v1/auth/activation/complete",
+                                "/api/v1/auth/activation/resend"
+                        )
+                        .permitAll()
 
-                                                /*
-                                                 * Notification Center APIs.
-                                                 *
-                                                 * Both roles may access notifications, but the
-                                                 * Notification Service returns only records
-                                                 * belonging to the authenticated user.
-                                                 */
-                                                .requestMatchers(
-                                                                "/api/v1/notifications/**")
-                                                .hasAnyRole(
-                                                                "ADMIN",
-                                                                "TENANT")
+                        /*
+                         * Public health-check endpoint.
+                         *
+                         * Other actuator endpoints remain
+                         * protected.
+                         */
+                        .requestMatchers(
+                                "/actuator/health"
+                        )
+                        .permitAll()
 
-                                                /*
-                                                 * Only an Admin can create a linked
-                                                 * portal account for an existing Tenant.
-                                                 */
-                                                .requestMatchers(
-                                                                "/api/v1/users/tenant-account")
-                                                .hasRole("ADMIN")
+                        /*
+                         * Tenant self-profile endpoint.
+                         *
+                         * This rule must appear before the
+                         * broader /api/v1/tenants/** rule.
+                         */
+                        .requestMatchers(
+                                "/api/v1/tenants/me"
+                        )
+                        .hasRole("TENANT")
 
-                                                /*
-                                                 * Admin-only management APIs.
-                                                 *
-                                                 * The /api/v1/tenants/me rule must appear
-                                                 * before /api/v1/tenants/**.
-                                                 */
-                                                .requestMatchers(
-                                                                "/api/v1/buildings/**",
-                                                                "/api/v1/rooms/**",
-                                                                "/api/v1/tenants/**")
-                                                .hasRole("ADMIN")
+                        /*
+                         * Admin and Tenant users can access
+                         * their respective notifications.
+                         *
+                         * Notification ownership continues
+                         * to be validated in the service.
+                         */
+                        .requestMatchers(
+                                "/api/v1/notifications/**"
+                        )
+                        .hasAnyRole(
+                                "ADMIN",
+                                "TENANT"
+                        )
 
-                                                /*
-                                                 * Any endpoint not listed above still
-                                                 * requires a valid authenticated user.
-                                                 */
-                                                .anyRequest()
-                                                .authenticated())
+                        /*
+                         * Admin Communication Center.
+                         */
+                        .requestMatchers(
+                                "/api/v1/admin/announcements/**"
+                        )
+                        .hasRole("ADMIN")
 
-                                /*
-                                 * Run the custom JWT filter before Spring's
-                                 * username/password authentication filter.
-                                 */
-                                .addFilterBefore(
-                                                jwtAuthenticationFilter,
-                                                UsernamePasswordAuthenticationFilter.class);
+                        /*
+                         * Only an Admin can create a portal
+                         * account for a Tenant.
+                         */
+                        .requestMatchers(
+                                "/api/v1/users/tenant-account"
+                        )
+                        .hasRole("ADMIN")
 
-                return http.build();
-        }
+                        /*
+                         * Building management.
+                         */
+                        .requestMatchers(
+                                "/api/v1/buildings/**"
+                        )
+                        .hasRole("ADMIN")
+
+                        /*
+                         * Room management.
+                         */
+                        .requestMatchers(
+                                "/api/v1/rooms/**"
+                        )
+                        .hasRole("ADMIN")
+
+                        /*
+                         * Tenant management.
+                         *
+                         * /api/v1/tenants/me was already
+                         * handled above as Tenant-only.
+                         */
+                        .requestMatchers(
+                                "/api/v1/tenants/**"
+                        )
+                        .hasRole("ADMIN")
+
+                        /*
+                         * Remaining User-management APIs.
+                         */
+                        .requestMatchers(
+                                "/api/v1/users/**"
+                        )
+                        .hasRole("ADMIN")
+
+                        /*
+                         * Require authentication for any
+                         * endpoint not explicitly listed.
+                         */
+                        .anyRequest()
+                        .authenticated()
+                )
+
+                /*
+                 * Run the JWT authentication filter before
+                 * Spring Security's standard authentication
+                 * filter.
+                 */
+                .addFilterBefore(
+                        jwtAuthenticationFilter,
+                        UsernamePasswordAuthenticationFilter.class
+                );
+
+        return http.build();
+    }
 }
